@@ -11,9 +11,9 @@ mkdir ../model/vit_checkpoint/imagenet21k &&
 mv {MODEL_NAME}.npz ../model/vit_checkpoint/imagenet21k/{MODEL_NAME}.npz
 ```
 
-### 2. Prepare data
+Download the data and models from: https://drive.google.com/drive/folders/1ACJEoTp-uqfFJ73qS3eUObQh52nGuzCd and recreate the same file structure so that the repo root, models, and data are on the same level as in below
+![image](https://github.com/ucsc-jttang/CSE-244C-Final-Project/assets/160563338/08201b5d-53ec-47de-8d19-0f7bd865b968)
 
-Please go to ["./datasets/README.md"](datasets/README.md) for details, or please send an Email to jienengchen01 AT gmail.com to request the preprocessed data. If you would like to use the preprocessed data, please use it for research purposes and do not redistribute it.
 
 ### 3. Environment
 
