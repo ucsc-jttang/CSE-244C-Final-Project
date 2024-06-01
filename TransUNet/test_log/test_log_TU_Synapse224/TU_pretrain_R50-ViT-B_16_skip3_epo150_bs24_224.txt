@@ -1,0 +1,41 @@
+[00:11:09.849] Namespace(Dataset=<class 'datasets.dataset_synapse.Synapse_dataset'>, base_lr=0.01, batch_size=24, dataset='Synapse', deterministic=1, exp='TU_Synapse224', img_size=224, is_pretrain=True, is_savenii=False, list_dir='./lists/lists_Synapse', max_epochs=150, max_iterations=20000, n_skip=3, num_classes=9, seed=1234, test_save_dir='../predictions', vit_name='R50-ViT-B_16', vit_patches_size=16, volume_path='../data/Synapse/test_vol_h5', z_spacing=1)
+[00:11:09.849] TU_pretrain_R50-ViT-B_16_skip3_epo150_bs24_224
+[00:11:09.860] 12 test iterations per epoch
+[00:13:25.467] idx 0 case case0008 mean_dice 0.664198 mean_hd95 30.282138
+[00:14:43.404] idx 1 case case0022 mean_dice 0.900203 mean_hd95 18.986321
+[00:16:09.680] idx 2 case case0038 mean_dice 0.744003 mean_hd95 55.854151
+[00:19:06.107] idx 3 case case0036 mean_dice 0.825200 mean_hd95 11.218625
+[00:21:14.816] idx 4 case case0032 mean_dice 0.828287 mean_hd95 14.099979
+[00:23:15.708] idx 5 case case0002 mean_dice 0.875466 mean_hd95 5.532508
+[00:24:39.528] idx 6 case case0029 mean_dice 0.686520 mean_hd95 41.451801
+[00:27:12.565] Namespace(Dataset=<class 'datasets.dataset_synapse.Synapse_dataset'>, base_lr=0.01, batch_size=24, dataset='Synapse', deterministic=1, exp='TU_Synapse224', img_size=224, is_pretrain=True, is_savenii=False, list_dir='./lists/lists_Synapse', max_epochs=150, max_iterations=20000, n_skip=3, num_classes=9, seed=1234, test_save_dir='../predictions', vit_name='R50-ViT-B_16', vit_patches_size=16, volume_path='../data/Synapse/test_vol_h5', z_spacing=1)
+[00:27:12.565] TU_pretrain_R50-ViT-B_16_skip3_epo150_bs24_224
+[00:27:12.565] 12 test iterations per epoch
+[00:27:47.985] idx 7 case case0003 mean_dice 0.587786 mean_hd95 89.006688
+[00:29:30.276] idx 0 case case0008 mean_dice 0.664198 mean_hd95 30.282138
+[00:30:05.078] idx 8 case case0001 mean_dice 0.736894 mean_hd95 39.508066
+[00:30:49.449] idx 1 case case0022 mean_dice 0.900203 mean_hd95 18.986321
+[00:32:10.122] idx 9 case case0004 mean_dice 0.786966 mean_hd95 9.540865
+[00:32:17.384] idx 2 case case0038 mean_dice 0.744003 mean_hd95 55.854151
+[00:33:25.263] idx 10 case case0025 mean_dice 0.783516 mean_hd95 46.126788
+[00:35:14.841] idx 3 case case0036 mean_dice 0.825200 mean_hd95 11.218625
+[00:37:25.498] idx 4 case case0032 mean_dice 0.828287 mean_hd95 14.099979
+[00:39:28.136] idx 5 case case0002 mean_dice 0.875466 mean_hd95 5.532508
+[00:40:52.747] idx 6 case case0029 mean_dice 0.686520 mean_hd95 41.451801
+[00:43:59.936] idx 7 case case0003 mean_dice 0.587786 mean_hd95 89.006688
+[00:46:16.296] idx 8 case case0001 mean_dice 0.736894 mean_hd95 39.508066
+[00:48:20.473] idx 9 case case0004 mean_dice 0.786966 mean_hd95 9.540865
+[00:49:35.268] idx 10 case case0025 mean_dice 0.783516 mean_hd95 46.126788
+[00:50:46.092] idx 11 case case0035 mean_dice 0.885252 mean_hd95 3.076626
+[00:50:46.155] Mean class 1 mean_dice 0.871962 mean_hd95 10.591081
+[00:50:46.156] Mean class 2 mean_dice 0.622570 mean_hd95 16.486551
+[00:50:46.156] Mean class 3 mean_dice 0.828543 mean_hd95 72.616754
+[00:50:46.156] Mean class 4 mean_dice 0.763667 mean_hd95 24.776699
+[00:50:46.156] Mean class 5 mean_dice 0.945714 mean_hd95 24.683423
+[00:50:46.156] Mean class 6 mean_dice 0.561805 mean_hd95 14.539939
+[00:50:46.156] Mean class 7 mean_dice 0.847207 mean_hd95 63.133838
+[00:50:46.156] Mean class 8 mean_dice 0.761393 mean_hd95 16.294751
+[00:50:46.156] Testing performance in best val model: mean_dice : 0.775358 mean_hd95 : 30.390379
+[07:12:37.515] Namespace(Dataset=<class 'datasets.dataset_synapse.Synapse_dataset'>, base_lr=0.01, batch_size=24, dataset='Synapse', deterministic=1, exp='TU_Synapse224', img_size=224, is_pretrain=True, is_savenii=False, list_dir='./lists/lists_Synapse', max_epochs=150, max_iterations=20000, n_skip=3, num_classes=9, seed=1234, test_save_dir='../predictions', vit_name='R50-ViT-B_16', vit_patches_size=16, volume_path='../data/Synapse/test_vol_h5', z_spacing=1)
+[07:12:37.515] TU_pretrain_R50-ViT-B_16_skip3_epo150_bs24_224
+[07:12:37.516] 12 test iterations per epoch
