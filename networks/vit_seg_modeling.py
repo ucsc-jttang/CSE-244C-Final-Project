@@ -18,6 +18,13 @@ from torch.nn.modules.utils import _pair
 from scipy import ndimage
 from . import vit_seg_configs as configs
 from .vit_seg_modeling_resnet_skip import ResNetV2
+from .vit_seg_modeling_resnet_skip import DANetHead
+from .vit_seg_modeling_resnet_skip import CANetHead
+from .vit_seg_modeling_resnet_skip import PANetHead
+from torch.nn import Module, Sequential, Conv2d, ReLU,AdaptiveMaxPool2d, AdaptiveAvgPool2d, \
+    NLLLoss, BCELoss, CrossEntropyLoss, AvgPool2d, MaxPool2d, Parameter, Linear, Sigmoid, Softmax, Dropout, Embedding
+from torch.nn import functional as F
+from torch.autograd import Variable
 
 
 logger = logging.getLogger(__name__)
@@ -164,6 +171,65 @@ class Embeddings(nn.Module):
         embeddings = self.dropout(embeddings)
         return embeddings, features
 
+class DAEmbeddings(Embeddings):
+
+    def __init__(self, config, img_size, in_channels=3):
+        super(DAEmbeddings, self).__init__(config, img_size, in_channels)
+        self.DAblock1 = DANetHead(768,768)
+
+    def forward(self, x):
+        if self.hybrid:
+            x, features = self.hybrid_model(x)
+        else:
+            features = None
+        x = self.patch_embeddings(x)  # (B, hidden. n_patches^(1/2), n_patches^(1/2))
+        x = self.DAblock1(x)
+        x = x.flatten(2)
+        x = x.transpose(-1, -2)  # (B, n_patches, hidden)
+
+        embeddings = x + self.position_embeddings
+        embeddings = self.dropout(embeddings)
+        return embeddings, features
+    
+class CAEmbeddings(Embeddings):
+
+    def __init__(self, config, img_size, in_channels=3):
+        super(CAEmbeddings, self).__init__(config, img_size, in_channels)
+        self.CAblock1 = CANetHead(768,768)
+
+    def forward(self, x):
+        if self.hybrid:
+            x, features = self.hybrid_model(x)
+        else:
+            features = None
+        x = self.patch_embeddings(x)  # (B, hidden. n_patches^(1/2), n_patches^(1/2))
+        x = self.CAblock1(x)
+        x = x.flatten(2)
+        x = x.transpose(-1, -2)  # (B, n_patches, hidden)
+
+        embeddings = x + self.position_embeddings
+        embeddings = self.dropout(embeddings)
+        return embeddings, features
+
+class PAEmbeddings(Embeddings):
+
+    def __init__(self, config, img_size, in_channels=3):
+        super(PAEmbeddings, self).__init__(config, img_size, in_channels)
+        self.PAblock1 = PANetHead(768,768)
+
+    def forward(self, x):
+        if self.hybrid:
+            x, features = self.hybrid_model(x)
+        else:
+            features = None
+        x = self.patch_embeddings(x)  # (B, hidden. n_patches^(1/2), n_patches^(1/2))
+        x = self.PAblock1(x)
+        x = x.flatten(2)
+        x = x.transpose(-1, -2)  # (B, n_patches, hidden)
+
+        embeddings = x + self.position_embeddings
+        embeddings = self.dropout(embeddings)
+        return embeddings, features
 
 class Block(nn.Module):
     def __init__(self, config, vis):
@@ -255,6 +321,20 @@ class Transformer(nn.Module):
         encoded, attn_weights = self.encoder(embedding_output)  # (B, n_patch, hidden)
         return encoded, attn_weights, features
 
+class DATransformer(Transformer):
+    def __init__(self,config, img_size, vis):
+        super(DATransformer, self).__init__(config, img_size, vis)
+        self.embeddings = DAEmbeddings(config, img_size=img_size)
+
+class CATransformer(Transformer):
+    def __init__(self,config, img_size, vis):
+        super(CATransformer, self).__init__(config, img_size, vis)
+        self.embeddings = CAEmbeddings(config, img_size=img_size)
+
+class PATransformer(Transformer):
+    def __init__(self,config, img_size, vis):
+        super(PATransformer, self).__init__(config, img_size, vis)
+        self.embeddings = PAEmbeddings(config, img_size=img_size)
 
 class Conv2dReLU(nn.Sequential):
     def __init__(
@@ -314,6 +394,96 @@ class DecoderBlock(nn.Module):
         x = self.conv2(x)
         return x
 
+class DADecoderBlock(DecoderBlock):
+    def __init__(
+            self,
+            in_channels,
+            out_channels,
+            skip_channels=0,
+            use_batchnorm=True,
+    ):
+        super(DADecoderBlock, self).__init__(in_channels, out_channels, skip_channels, use_batchnorm)
+        self.da = DANetHead(64, 64)
+        self.da2 = DANetHead(256, 256)
+        self.da3 = DANetHead(512, 512)
+    
+    def forward(self, x, skip=None):
+        x = self.up(x)
+        if skip is not None:
+            if skip.size(1) and x.size(1) == 64:
+                skip = self.da(skip) 
+            
+            if skip.size(1) and x.size(1) == 256:
+                skip = self.da2(skip)
+                
+            if skip.size(1) and x.size(1) == 512:
+                skip = self.da3(skip)
+                
+            x = torch.cat([x, skip], dim=1)
+        x = self.conv1(x)
+        x = self.conv2(x)
+        return x
+    
+
+class CADecoderBlock(DecoderBlock):
+    def __init__(
+            self,
+            in_channels,
+            out_channels,
+            skip_channels=0,
+            use_batchnorm=True,
+    ):
+        super(CADecoderBlock, self).__init__(in_channels, out_channels, skip_channels, use_batchnorm)
+        self.da = CANetHead(64, 64)
+        self.da2 = CANetHead(256, 256)
+        self.da3 = CANetHead(512, 512)
+    
+    def forward(self, x, skip=None):
+        x = self.up(x)
+        if skip is not None:
+            if skip.size(1) and x.size(1) == 64:
+                skip = self.da(skip) 
+            
+            if skip.size(1) and x.size(1) == 256:
+                skip = self.da2(skip)
+                
+            if skip.size(1) and x.size(1) == 512:
+                skip = self.da3(skip)
+                
+            x = torch.cat([x, skip], dim=1)
+        x = self.conv1(x)
+        x = self.conv2(x)
+        return x
+
+class PADecoderBlock(DecoderBlock):
+    def __init__(
+            self,
+            in_channels,
+            out_channels,
+            skip_channels=0,
+            use_batchnorm=True,
+    ):
+        super(PADecoderBlock, self).__init__(in_channels, out_channels, skip_channels, use_batchnorm)
+        self.da = PANetHead(64, 64)
+        self.da2 = PANetHead(256, 256)
+        self.da3 = PANetHead(512, 512)
+    
+    def forward(self, x, skip=None):
+        x = self.up(x)
+        if skip is not None:
+            if skip.size(1) and x.size(1) == 64:
+                skip = self.da(skip) 
+            
+            if skip.size(1) and x.size(1) == 256:
+                skip = self.da2(skip)
+                
+            if skip.size(1) and x.size(1) == 512:
+                skip = self.da3(skip)
+                
+            x = torch.cat([x, skip], dim=1)
+        x = self.conv1(x)
+        x = self.conv2(x)
+        return x
 
 class SegmentationHead(nn.Sequential):
 
@@ -365,6 +535,66 @@ class DecoderCup(nn.Module):
                 skip = None
             x = decoder_block(x, skip=skip)
         return x
+    
+class DADecoderCup(DecoderCup):
+    def __init__(self, config):
+        super(DADecoderCup, self).__init__(config)
+        decoder_channels = config.decoder_channels
+        head_channels = 512
+        in_channels = [head_channels] + list(decoder_channels[:-1])
+        out_channels = decoder_channels
+        if self.config.n_skip != 0:
+            skip_channels = self.config.skip_channels
+            for i in range(4-self.config.n_skip):  # re-select the skip channels according to n_skip
+                skip_channels[3-i]=0
+
+        else:
+            skip_channels=[0,0,0,0]
+
+        blocks = [
+           DADecoderBlock(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in zip(in_channels, out_channels, skip_channels)
+        ]    
+        self.blocks = nn.ModuleList(blocks)
+    
+class CADecoderCup(DecoderCup):
+    def __init__(self, config):
+        super(CADecoderCup, self).__init__(config)
+        decoder_channels = config.decoder_channels
+        head_channels = 512
+        in_channels = [head_channels] + list(decoder_channels[:-1])
+        out_channels = decoder_channels
+        if self.config.n_skip != 0:
+            skip_channels = self.config.skip_channels
+            for i in range(4-self.config.n_skip):  # re-select the skip channels according to n_skip
+                skip_channels[3-i]=0
+
+        else:
+            skip_channels=[0,0,0,0]
+
+        blocks = [
+           CADecoderBlock(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in zip(in_channels, out_channels, skip_channels)
+        ]    
+        self.blocks = nn.ModuleList(blocks)
+
+class PADecoderCup(DecoderCup):
+    def __init__(self, config):
+        super(PADecoderCup, self).__init__(config)
+        decoder_channels = config.decoder_channels
+        head_channels = 512
+        in_channels = [head_channels] + list(decoder_channels[:-1])
+        out_channels = decoder_channels
+        if self.config.n_skip != 0:
+            skip_channels = self.config.skip_channels
+            for i in range(4-self.config.n_skip):  # re-select the skip channels according to n_skip
+                skip_channels[3-i]=0
+
+        else:
+            skip_channels=[0,0,0,0]
+
+        blocks = [
+           PADecoderBlock(in_ch, out_ch, sk_ch) for in_ch, out_ch, sk_ch in zip(in_channels, out_channels, skip_channels)
+        ]    
+        self.blocks = nn.ModuleList(blocks)
 
 
 class VisionTransformer(nn.Module):
@@ -439,6 +669,24 @@ class VisionTransformer(nn.Module):
                     for uname, unit in block.named_children():
                         unit.load_from(res_weight, n_block=bname, n_unit=uname)
 
+class DAVisionTransformer(VisionTransformer):
+    def __init__(self, config, img_size=224, num_classes=21843, zero_head=False, vis=False):
+        super(DAVisionTransformer, self).__init__(config, img_size, num_classes, zero_head, vis)
+        self.transformer = DATransformer(config, img_size, vis)
+        self.decoder = DADecoderCup(config)
+
+class CAVisionTransformer(VisionTransformer):
+    def __init__(self, config, img_size=224, num_classes=21843, zero_head=False, vis=False):
+        super(CAVisionTransformer, self).__init__(config, img_size, num_classes, zero_head, vis)
+        self.transformer = CATransformer(config, img_size, vis)
+        self.decoder = CADecoderCup(config)
+
+class PAVisionTransformer(VisionTransformer):
+    def __init__(self, config, img_size=224, num_classes=21843, zero_head=False, vis=False):
+        super(PAVisionTransformer, self).__init__(config, img_size, num_classes, zero_head, vis)
+        self.transformer = PATransformer(config, img_size, vis)
+        self.decoder = PADecoderCup(config)
+
 CONFIGS = {
     'ViT-B_16': configs.get_b16_config(),
     'ViT-B_32': configs.get_b32_config(),
@@ -449,5 +697,4 @@ CONFIGS = {
     'R50-ViT-L_16': configs.get_r50_l16_config(),
     'testing': configs.get_testing(),
 }
-
 

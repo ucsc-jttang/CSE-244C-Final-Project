@@ -5,6 +5,9 @@ import random
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
+from networks.vit_seg_modeling import CAVisionTransformer as CAViT_seg
+from networks.vit_seg_modeling import PAVisionTransformer as PAViT_seg
+from networks.vit_seg_modeling import DAVisionTransformer as DAViT_seg
 from networks.vit_seg_modeling import VisionTransformer as ViT_seg
 from networks.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
 from trainer import trainer_synapse
@@ -39,6 +42,8 @@ parser.add_argument('--vit_name', type=str,
                     default='R50-ViT-B_16', help='select one vit model')
 parser.add_argument('--vit_patches_size', type=int,
                     default=16, help='vit_patches_size, default is 16')
+parser.add_argument('--architecture', type=str,
+                    default='TU', help='select DATU or TU model')
 args = parser.parse_args()
 
 
@@ -68,8 +73,8 @@ if __name__ == "__main__":
     args.root_path = dataset_config[dataset_name]['root_path']
     args.list_dir = dataset_config[dataset_name]['list_dir']
     args.is_pretrain = True
-    args.exp = 'TU_' + dataset_name + str(args.img_size)
-    snapshot_path = "../model/{}/{}".format(args.exp, 'TU')
+    args.exp = str(args.architecture) + '_' + dataset_name + str(args.img_size)
+    snapshot_path = "../model/{}/{}".format(args.exp, str(args.architecture))
     snapshot_path = snapshot_path + '_pretrain' if args.is_pretrain else snapshot_path
     snapshot_path += '_' + args.vit_name
     snapshot_path = snapshot_path + '_skip' + str(args.n_skip)
@@ -88,7 +93,18 @@ if __name__ == "__main__":
     config_vit.n_skip = args.n_skip
     if args.vit_name.find('R50') != -1:
         config_vit.patches.grid = (int(args.img_size / args.vit_patches_size), int(args.img_size / args.vit_patches_size))
-    net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
+    if (str(args.architecture) == 'DATU'):
+        print("DATU selected")
+        net = DAViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
+    elif (str(args.architecture) == 'PATU'):
+        print("PATU selected")
+        net = PAViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
+    elif (str(args.architecture) == 'CATU'):
+        print("CATU selected")
+        net = CAViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
+    else:
+        print("TU selected")
+        net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
     net.load_from(weights=np.load(config_vit.pretrained_path))
 
     trainer = {'Synapse': trainer_synapse,}

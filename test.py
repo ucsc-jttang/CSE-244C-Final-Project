@@ -11,8 +11,13 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from datasets.dataset_synapse import Synapse_dataset
 from utils import test_single_volume
+
+from networks.vit_seg_modeling import DAVisionTransformer as DAViT_seg
+from networks.vit_seg_modeling import PAVisionTransformer as PAViT_seg
+from networks.vit_seg_modeling import CAVisionTransformer as CAViT_seg
 from networks.vit_seg_modeling import VisionTransformer as ViT_seg
 from networks.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--volume_path', type=str,
@@ -39,6 +44,8 @@ parser.add_argument('--deterministic', type=int,  default=1, help='whether use d
 parser.add_argument('--base_lr', type=float,  default=0.01, help='segmentation network learning rate')
 parser.add_argument('--seed', type=int, default=1234, help='random seed')
 parser.add_argument('--vit_patches_size', type=int, default=16, help='vit_patches_size, default is 16')
+parser.add_argument('--architecture', type=str,
+                    default='TU', help='select DATU or TU model')
 args = parser.parse_args()
 
 
@@ -95,8 +102,8 @@ if __name__ == "__main__":
     args.is_pretrain = True
 
     # name the same snapshot defined in train script!
-    args.exp = 'TU_' + dataset_name + str(args.img_size)
-    snapshot_path = "../model/{}/{}".format(args.exp, 'TU')
+    args.exp = str(args.architecture) + '_' + dataset_name + str(args.img_size)
+    snapshot_path = "../model/{}/{}".format(args.exp, str(args.architecture))
     snapshot_path = snapshot_path + '_pretrain' if args.is_pretrain else snapshot_path
     snapshot_path += '_' + args.vit_name
     snapshot_path = snapshot_path + '_skip' + str(args.n_skip)
@@ -115,8 +122,19 @@ if __name__ == "__main__":
     config_vit.patches.size = (args.vit_patches_size, args.vit_patches_size)
     if args.vit_name.find('R50') !=-1:
         config_vit.patches.grid = (int(args.img_size/args.vit_patches_size), int(args.img_size/args.vit_patches_size))
-    net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
-
+    if (str(args.architecture) == 'DATU'):
+        print("DATU selected")
+        net = DAViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
+    elif (str(args.architecture) == 'PATU'):
+        print("PATU selected")
+        net = PAViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
+    elif (str(args.architecture) == 'CATU'):
+        print("CATU selected")
+        net = CAViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
+    else:
+        print("TU selected")
+        net = ViT_seg(config_vit, img_size=args.img_size, num_classes=config_vit.n_classes).cuda()
+    
     snapshot = os.path.join(snapshot_path, 'best_model.pth')
     if not os.path.exists(snapshot): snapshot = snapshot.replace('best_model', 'epoch_'+str(args.max_epochs-1))
     
