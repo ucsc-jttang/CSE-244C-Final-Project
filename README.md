@@ -15,18 +15,28 @@ Please prepare an environment with python=3.7, and then use the command "pip ins
 
 ### 4. Train/Test
 
-- To train the TUnet and DATUnet models, use the corresponding train files. In the example outputs, a batch size of 20 was used due to memory constraints with the DATUnet model
+- To train, specify the architecture, else it will default to TransUnet. In the example outputs, a batch size of 20 was used due to memory constraints with the DATUnet model. 
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python train.py --dataset Synapse --vit_name R50-ViT-B_16
-CUDA_VISIBLE_DEVICES=0 python datrain.py --dataset Synapse --vit_name R50-ViT-B_16
+CUDA_VISIBLE_DEVICES=0 python train.py --dataset Synapse --vit_name R50-ViT-B_16 --batch_size 20 --architecture DATU 
+
+CUDA_VISIBLE_DEVICES=0 python train.py --dataset Synapse --vit_name R50-ViT-B_16 --batch_size 20 --architecture TU
+
+CUDA_VISIBLE_DEVICES=0 python train.py --dataset Synapse --vit_name R50-ViT-B_16 --batch_size 20 --architecture CATU
+
+CUDA_VISIBLE_DEVICES=0 python train.py --dataset Synapse --vit_name R50-ViT-B_16 --batch_size 20 --architecture PATU
 ```
 
-- Run the test script on synapse dataset. It supports testing for both 2D images and 3D volumes.
+- Run the test script on synapse dataset. It supports testing for both 2D images and 3D volumes. Specify the architecture to be tested or else it defaults to TransUnet
 
 ```bash
-python test.py --dataset Synapse --vit_name R50-ViT-B_16
-python datest.py --dataset Synapse --vit_name R50-ViT-B_16
+python test.py --dataset Synapse --vit_name R50-ViT-B_16 --architecture PATU --batch_size 20
+
+python test.py --dataset Synapse --vit_name R50-ViT-B_16 --architecture CATU --batch_size 20
+
+python test.py --dataset Synapse --vit_name R50-ViT-B_16 --architecture DATU --batch_size 20
+
+python test.py --dataset Synapse --vit_name R50-ViT-B_16 --batch_size 20
 
 ```
 
